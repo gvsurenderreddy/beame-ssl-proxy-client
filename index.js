@@ -175,7 +175,7 @@ ProxyClient.prototype.createLocalServerConnection = function (data, callback) {
         }, this));
 
         client.on('error', _.bind(function (error) {
-            console.log("Socket Error in ProxyClient " + error);
+            console.log("Socket Error in ProxyClient ", error);
 
             if (this.socketio) {
                 proxyUtils.emitMessage(this.socketio, '_error', proxyUtils.formatMessage(client.serverSideSocketId, null, error));
