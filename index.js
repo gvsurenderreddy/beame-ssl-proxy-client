@@ -9,7 +9,7 @@ var io = require('socket.io-client');
 
 var ProxyUtils = require('beame-utils').ProxyUtils;
 var proxyUtils = new ProxyUtils();
-
+var debug = require('debug')("beame-ssl-proxy-client");
 
 /**
  * @typedef {Object} HttpsProxyAgent
@@ -59,7 +59,7 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
     /** @member {Number} */
     this.targetPort = targetPort;
 
-    console.info("ProxyClient connecting to " + this.edgeServerHostname);
+    debug("ProxyClient connecting to " + this.edgeServerHostname);
 
     /**
      * Connect to ProxyServer
@@ -73,7 +73,7 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
         io_options.key = edgeClientCerts.key;
 
     }
-
+	this.options = options;
     this.socketio = io.connect(this.edgeServerHostname + '/control',io_options);
 
     this.socketio.on('connect', _.bind(function () {
@@ -87,22 +87,22 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
             type: this.type
         }));
 
-        options && options.onConnect && options.onConnect();
+        this.options && this.options.onConnect && this.options.onConnect();
 
     }, this));
 
     this.socketio.on('error', _.bind(function (err) {
-        console.log("Could not connect to proxy server", err);
+        debug("Could not connect to proxy server", err);
     }, this));
 
     this.socketio.on('create_connection', _.bind(function (data) {
-        this.createLocalServerConnection.call(this, data, options && options.onLocalServerCreated);
+        this.createLocalServerConnection.call(this, data, this.options && this.options.onLocalServerCreated);
     }, this));
 
     this.socketio.on('hostRegistered', _.bind(function (data) {
         options && options.onLocalServerCreated;
-      //  this.createLocalServerConnection.call(this, data, options && options.onLocalServerCreated);
-        console.log('hostRegistered', data);
+      //  this.createLocalServerConnection.call(this, data, this.options && this.options.onLocalServerCreated);
+        debug('hostRegistered', data);
     }, this));
 
     this.socketio.on('data', _.bind(function (data) {
@@ -123,7 +123,7 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
     }, this));
 
     this.socketio.on('_end', _.bind(function (data) {
-        console.log("***************Killing the socket ");
+        debug("***************Killing the socket ");
         if (!data || !data.socketId) {
             return;
         }
@@ -158,25 +158,25 @@ ProxyClient.prototype.createLocalServerConnection = function (data, callback) {
         client.connect(this.targetPort, this.targetHost, _.bind(function () {
 
             client.on('data', _.bind(function (data) {
-                console.log('**********Client Proxy on client(Socket) data');
+                debug('**********Client Proxy on client(Socket) data');
                 proxyUtils.emitMessage(this.socketio, 'data', proxyUtils.formatMessage(client.serverSideSocketId, data));
 
             }, this));
 
             client.on('close', _.bind(function () {
-                console.log("Connection closed by server");
+                debug("Connection closed by server");
                 proxyUtils.emitMessage(this.socketio, 'disconnect_client', proxyUtils.formatMessage(client.serverSideSocketId));
 
             }, this));
 
             client.on('end', _.bind(function () {
-                console.log("Connection end by server");
+                debug("Connection end by server");
                 // this.socketio && this.socketio.emit('disconnect_client', {socketId: client.serverSideSocketId});
             }, this));
         }, this));
 
         client.on('error', _.bind(function (error) {
-            console.log("Socket Error in ProxyClient ", error);
+            debug("Socket Error in ProxyClient ", error);
 
             if (this.socketio) {
                 proxyUtils.emitMessage(this.socketio, '_error', proxyUtils.formatMessage(client.serverSideSocketId, null, error));
