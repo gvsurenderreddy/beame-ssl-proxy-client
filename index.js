@@ -80,7 +80,7 @@ function ProxyClient(serverType, edgeClientHostname, edgeServerHostname, targetH
         if (this.connected) {
             return;
         }
-        console.info("ProxyClient connected:{hostname, endpoint, targetHost, targetPort}", this.hostname, this.edgeServerHostname, this.targetHost, this.targetPort);
+        debug("ProxyClient connected:{hostname, endpoint, targetHost, targetPort}", this.hostname, this.edgeServerHostname, this.targetHost, this.targetPort);
         this.connected = true;
         proxyUtils.emitMessage(this.socketio, 'register_server', proxyUtils.formatMessage(null, {
             hostname: this.hostname,
