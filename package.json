@@ -1,6 +1,6 @@
 {
   "name": "beame-ssl-proxy-client",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Webscoket tunnelling client to work with a beame systems, and expose a local https server to internet",
   "main": "index.js",
   "scripts": {
